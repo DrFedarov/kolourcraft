@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "KolourCraft",
+        "description": "KolourCraft adds a sidebar page where you create color cycling scenes. Press Submit to add it."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "KolourCraft is already set up. Open it from the sidebar."
+    }
+  }
+}
