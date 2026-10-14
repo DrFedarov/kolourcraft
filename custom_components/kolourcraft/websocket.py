@@ -18,7 +18,9 @@ from homeassistant.helpers.dispatcher import (
 )
 
 from .const import (
+    DEFAULT_MAX_SATURATION,
     DOMAIN,
+    MIN_MAX_SATURATION,
     MAX_SECONDS,
     SIGNAL_CHANGED,
     SIGNAL_SCENE_ADDED,
@@ -48,6 +50,9 @@ OVERRIDES_SCHEMA = vol.Schema(
         vol.Required("transition"): OVERRIDE_SCHEMA,
         vol.Optional("brightness", default={"enabled": False, "value": 100}): vol.Schema(
             {vol.Required("enabled"): bool, vol.Required("value"): BRIGHTNESS}
+        ),
+        vol.Optional("saturation", default={"value": DEFAULT_MAX_SATURATION}): vol.Schema(
+            {vol.Required("value"): vol.All(vol.Coerce(int), vol.Range(min=MIN_MAX_SATURATION, max=100))}
         ),
     }
 )

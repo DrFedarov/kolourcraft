@@ -18,7 +18,9 @@ const DEFAULT_OVERRIDES = {
   hold: { enabled: false, value: 5 },
   transition: { enabled: false, value: 2 },
   brightness: { enabled: false, value: 100 },
+  saturation: { value: 75 }, // always applied, no checkbox
 };
+const MIN_MAX_SATURATION = 30;
 const briLabel = (v) => (+v === 0 ? "Off" : `${v}%`);
 
 const esc = (s) =>
@@ -374,6 +376,8 @@ class KolourCraftPanel extends HTMLElement {
       t.closest(".step").querySelector(".bri-value").textContent = briLabel(t.value);
     } else if (t.dataset.ov === "brightness" && t.type === "range") {
       this._mirrorBrightness(t.value);
+    } else if (t.dataset.ov === "saturation") {
+      this.shadowRoot.querySelector(".ov-sat-value").textContent = `${t.value}%`;
     }
   }
 
@@ -400,6 +404,11 @@ class KolourCraftPanel extends HTMLElement {
       ov.enabled = t.checked;
       this._queueSave(scene);
       this._render();
+      return;
+    }
+    if (t.dataset.ov === "saturation") {
+      ov.value = clamp(Math.round(+t.value), MIN_MAX_SATURATION, 100);
+      this._queueSave(scene);
       return;
     }
     if (t.dataset.ov === "brightness") {
@@ -688,6 +697,18 @@ class KolourCraftPanel extends HTMLElement {
           </div>
         </div>
         <div class="muted small">Checked settings apply to every color of every light in this scene.</div>
+        <div class="override sat on">
+          <span class="override-label">Max saturation</span>
+          <label class="field">
+            <span><b class="ov-sat-value">${ov.saturation.value}%</b></span>
+            <input type="range" min="${MIN_MAX_SATURATION}" max="100" step="1" value="${ov.saturation.value}"
+              data-ov="saturation" aria-label="Max saturation">
+          </label>
+        </div>
+        <div class="muted small sat-note">
+          Always applied. Lowering this washes colors out, but reduces color snapping caused by the limits
+          of your lights' LED channels at low brightness. Dial it in for your brand of lights.
+        </div>
       </div>`;
   }
 
@@ -849,7 +870,7 @@ class KolourCraftPanel extends HTMLElement {
               (c) => `<button class="pal" data-act="picker-swatch" data-color="[${c}]" style="background:${rgbCss(c)}" title="${rgbToHex(c)}"></button>`
             ).join("")}
           </div>
-          <div class="muted small">Lights are sent at most 85% saturation, which keeps color fades smooth.</div>
+          <div class="muted small">Lights are sent no more than this scene's Max saturation (Global Overrides), which keeps fades smooth.</div>
           <div class="dialog-actions">
             <button class="text-btn" data-act="close-dialog">Cancel</button>
             <button class="primary" data-act="picker-apply">Apply</button>
@@ -1018,6 +1039,11 @@ const STYLES = `
   .override.on { border-color: var(--primary-color); }
   .override .field { width: 78px; }
   .override.bri .field { width: 140px; }
+  .override.sat { align-self: flex-start; }
+  .override.sat .field { width: 200px; }
+  .override.sat .field span { justify-content: flex-end; }
+  .override-label { font-size: 14px; }
+  .sat-note { max-width: 560px; margin-top: -4px; }
   .override.bri .field span { justify-content: flex-end; }
   .override:not(.on) .ov-bri-value { opacity: .5; }
   .override-check { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }

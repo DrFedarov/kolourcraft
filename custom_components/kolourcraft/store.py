@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 from homeassistant.util import ulid
 
-from .const import STORAGE_KEY, STORAGE_VERSION
+from .const import DEFAULT_MAX_SATURATION, STORAGE_KEY, STORAGE_VERSION
 
 
 def default_overrides() -> dict[str, dict[str, Any]]:
@@ -17,6 +17,8 @@ def default_overrides() -> dict[str, dict[str, Any]]:
         "hold": {"enabled": False, "value": 5},
         "transition": {"enabled": False, "value": 2},
         "brightness": {"enabled": False, "value": 100},
+        # Always applied: the highest saturation sent to the lights (see README).
+        "saturation": {"value": DEFAULT_MAX_SATURATION},
     }
 
 
@@ -37,6 +39,7 @@ class KolourCraftStore:
                 "hold": {"enabled": False, "value": 5},
                 "transition": {"enabled": False, "value": 2},
                 "brightness": {"enabled": False, "value": 100},
+                "saturation": {"value": 75},
             },
         }
 

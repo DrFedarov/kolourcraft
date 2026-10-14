@@ -26,13 +26,14 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .adaptive import AdaptiveLighting, member_ids
 from .const import (
+    DEFAULT_MAX_SATURATION,
     INFLIGHT_TIMEOUT,
-    MAX_SATURATION,
     MIN_LOOP_SECONDS,
     OFF_TO_ON_SETTLE,
     RESTORE_RETRIES,
     RESTORE_VERIFY_DELAY,
     SIGNAL_CHANGED,
+    SPLIT_HUE_DEGREES,
     STOP_SETTLE,
     TURN_ON_TIMEOUT,
 )
@@ -59,8 +60,14 @@ def effective_steps(scene: dict[str, Any], steps: list[dict[str, Any]]) -> list[
     return [{**step, **overrides} for step in steps] if overrides else steps
 
 
-def capped_hs(rgb: list[int]) -> list[float]:
-    """Convert a step's RGB color to hue/saturation with saturation capped at MAX_SATURATION.
+def max_saturation(scene: dict[str, Any]) -> float:
+    """The scene's Max saturation override as a 0-1 fraction."""
+    value = ((scene.get("overrides") or {}).get("saturation") or {}).get("value")
+    return (DEFAULT_MAX_SATURATION if value is None else value) / 100
+
+
+def capped_hs(rgb: list[int], cap: float) -> list[float]:
+    """Convert a step's RGB color to hue/saturation with saturation capped at `cap` (0-1).
 
     Fully saturated colors drive one or more of a bulb's LED channels to (near) zero, and
     many bulbs can only step a channel coarsely there, which shows as visible snaps during
@@ -68,7 +75,30 @@ def capped_hs(rgb: list[int]) -> list[float]:
     Brightness is sent separately, so the RGB value component is not needed.
     """
     hue, sat, _ = colorsys.rgb_to_hsv(*(c / 255 for c in rgb))
-    return [round(hue * 360, 1), round(min(sat, MAX_SATURATION) * 100, 1)]
+    return [round(hue * 360, 1), round(min(sat, cap) * 100, 1)]
+
+
+def split_midpoint(prev: dict[str, Any], step: dict[str, Any], cap: float) -> dict[str, Any] | None:
+    """Midpoint for a fade whose hues are nearly opposite, or None if no split is needed.
+
+    Bulbs fade hue the shorter way round from wherever they are when the command arrives.
+    When the two colors are close to 180 degrees apart, a bulb that lags slightly behind
+    the previous color picks the wrong way (e.g. cyan -> red through yellow) and visibly
+    reverses. Fading to a midpoint first, the short way, keeps every half well under 180.
+    """
+    if int(prev["brightness"]) <= 0 or int(step["brightness"]) <= 0:
+        return None
+    (h1, s1), (h2, s2) = capped_hs(prev["color"], cap), capped_hs(step["color"], cap)
+    if s1 == 0 or s2 == 0:  # white has no hue to go the wrong way from
+        return None
+    delta = (h2 - h1 + 540) % 360 - 180
+    if abs(delta) <= SPLIT_HUE_DEGREES:
+        return None
+    return {
+        **step,
+        "hs": [round((h1 + delta / 2) % 360, 1), round((s1 + s2) / 2, 1)],
+        "brightness": round((int(prev["brightness"]) + int(step["brightness"])) / 2),
+    }
 
 
 def _bulbs(hass: HomeAssistant, scene: dict[str, Any]) -> set[str]:
@@ -155,18 +185,28 @@ class SceneRunner:
         # out of sync with the others.
         loop = asyncio.get_running_loop()
         at, index = start, 0
+        prev: dict[str, Any] | None = None
         while True:
             if (delay := at - loop.time()) > 0:
                 await asyncio.sleep(delay)
             step = steps[index]
-            await self._apply_step(entity_id, step)
+            mid = split_midpoint(prev, step, max_saturation(self._scene)) if prev else None
+            if mid:
+                half = float(step["transition"]) / 2
+                await self._apply_step(entity_id, {**mid, "transition": half})
+                if (delay := at + half - loop.time()) > 0:
+                    await asyncio.sleep(delay)
+                await self._apply_step(entity_id, {**step, "transition": half})
+            else:
+                await self._apply_step(entity_id, step)
+            prev = step
             at += max(float(step["transition"]) + float(step["hold"]), MIN_LOOP_SECONDS)
             index = (index + 1) % len(steps)
 
     def _step_data(self, entity_id: str, step: dict[str, Any]) -> dict[str, Any]:
         return {
             ATTR_ENTITY_ID: entity_id,
-            "hs_color": capped_hs(step["color"]),
+            "hs_color": step.get("hs") or capped_hs(step["color"], max_saturation(self._scene)),
             "brightness_pct": int(step["brightness"]),
         }
 
