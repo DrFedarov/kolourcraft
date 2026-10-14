@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<g transform="translate(0 37)">
+  <defs>
+    <radialGradient id="glass" cx="50%" cy="42%" r="60%">
+      <stop offset="0" stop-color="#fffdf2"/>
+      <stop offset="0.6" stop-color="#fff3c4"/>
+      <stop offset="1" stop-color="#ffe08a"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0.55" stop-color="#fff3c4" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff3c4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6b7183"/>
+      <stop offset="0.45" stop-color="#a9afbf"/>
+      <stop offset="1" stop-color="#5b6070"/>
+    </linearGradient>
+  </defs>
+
+  <!-- soft glow behind the glass -->
+  <circle cx="256" cy="220" r="160" fill="url(#halo)"/>
+
+  <!-- colored rays -->
+  <g stroke-width="22" stroke-linecap="round" fill="none">
+    <line x1="111" y1="259" x2="68"  y2="270" stroke="#ff3fb4"/>
+    <line x1="111" y1="181" x2="68"  y2="170" stroke="#ff3b3b"/>
+    <line x1="150" y1="114" x2="118" y2="82"  stroke="#ff8a00"/>
+    <line x1="217" y1="75"  x2="206" y2="32"  stroke="#ffd000"/>
+    <line x1="295" y1="75"  x2="306" y2="32"  stroke="#2ecc71"/>
+    <line x1="362" y1="114" x2="394" y2="82"  stroke="#00c8ff"/>
+    <line x1="401" y1="181" x2="444" y2="170" stroke="#3d6bff"/>
+    <line x1="401" y1="259" x2="444" y2="270" stroke="#a64dff"/>
+  </g>
+
+  <!-- glass -->
+  <path d="M208 334 C208 300 136 282 136 220 A120 120 0 1 1 376 220 C376 282 304 300 304 334 Z"
+        fill="url(#glass)" stroke="#2b2d3a" stroke-width="14" stroke-linejoin="round"/>
+
+  <!-- dancer: disco pose -->
+  <g transform="translate(256 218) scale(0.8) translate(-256 -214)"
+     stroke="#2b2d3a" stroke-width="21" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M246 160 L258 232"/>
+    <path d="M250 174 L286 156 L314 118"/>
+    <path d="M250 176 L214 200 L252 220"/>
+    <path d="M258 232 L286 308"/>
+    <path d="M258 232 L222 262 L236 308"/>
+    <circle cx="238" cy="130" r="22" fill="#2b2d3a" stroke="none"/>
+  </g>
+
+  <!-- screw base -->
+  <rect x="200" y="334" width="112" height="30" rx="8" fill="url(#metal)" stroke="#2b2d3a" stroke-width="10"/>
+  <rect x="206" y="364" width="100" height="28" rx="8" fill="url(#metal)" stroke="#2b2d3a" stroke-width="10"/>
+  <path d="M226 392 H286 A30 26 0 0 1 226 392 Z" fill="#2b2d3a"/>
+</g>
+</svg>

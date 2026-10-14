@@ -1,3 +1,5 @@
+<p align="center"><img src="custom_components/kolourcraft/brand/icon@2x.png" alt="KolourCraft icon" width="160"></p>
+
 # KolourCraft
 
 Color-cycling light scenes for Home Assistant, edited from a sidebar panel.
