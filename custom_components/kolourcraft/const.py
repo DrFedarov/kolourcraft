@@ -2,7 +2,7 @@
 
 DOMAIN = "kolourcraft"
 NAME = "KolourCraft"
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 
 STORAGE_KEY = DOMAIN
 STORAGE_VERSION = 1
@@ -19,6 +19,11 @@ SIGNAL_CHANGED = f"{DOMAIN}_changed"
 # Limits for a single color step.
 MAX_SECONDS = 3600
 MIN_LOOP_SECONDS = 0.1
+
+# Highest saturation (0-1) sent to bulbs. Fades into fully saturated colors snapped visibly
+# on GE Cync Matter bulbs because LED channels near zero step coarsely; side-by-side tests
+# showed an 85% cap was by far the smoothest. See README "Why colors are capped at 85%".
+MAX_SATURATION = 0.85
 # Turning a light on from off: wait for it to report on, then settle before the real command.
 TURN_ON_TIMEOUT = 3
 OFF_TO_ON_SETTLE = 0.2

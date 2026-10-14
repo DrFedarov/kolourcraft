@@ -54,8 +54,34 @@ Requires Home Assistant 2026.7 or newer (the version it was built and tested on)
   brief full-brightness blink at the start of the loop or after an "Off" step.
 
 - **Fades are done by the bulb.** KolourCraft sends each color once with a fade time and the bulb
-  fades itself. Some bulbs (e.g. GE Cync over Matter) show small steps on certain colors such as red,
-  purple and cyan; that comes from the bulb's LED driver. Stepping the fade in software was tested
-  and looked worse.
+  fades itself. Stepping the fade in software was tested and looked worse (see below).
+- **Colors are sent at no more than 85% saturation.** See the next section.
+
+## Why colors are capped at 85% saturation
+
+On GE Cync Full Color (Matter) bulbs, fades into fully saturated colors such as pure red snapped
+visibly part-way through instead of fading smoothly. Fully saturated colors drive one or more of the
+bulb's red, green or blue LED channels to (or near) zero, and the bulb can only dim a channel in coarse
+steps at those very low levels, so the light jumps instead of gliding.
+
+Several fixes were tested side by side on the same bulbs, fading red → purple → cyan with 3 s fades:
+
+| Approach | Result |
+|---|---|
+| Bulb's own fade, colors sent as picked (previous behavior) | Visible snaps, mostly on red, purple and cyan |
+| Software fades: new color every 0.5 s or 0.25 s | Worse; the steps themselves were visible |
+| Fades sent in XY color instead of hue/saturation | Less smooth than the saturation cap |
+| Hue/saturation with saturation capped at 85% | Smoothest by a large margin |
+
+So KolourCraft converts each color to hue/saturation and limits saturation to 85% before sending it.
+Every LED channel then stays above the range where the bulb steps coarsely. The colors you pick in
+the editor are stored unchanged; only what is sent to the lights is capped, so fully saturated
+colors appear very slightly softer (pure red is sent as 85% saturated red). Colors already at or below
+85% saturation, such as most pastels, are sent exactly as picked.
+
+The first fade from white into a color can still show some stepping, because white has every
+channel at full and that fade drives channels down toward low levels. Fades between colors are smooth.
+
+The cap is the `MAX_SATURATION` constant in `custom_components/kolourcraft/const.py`.
 
 Scenes and favorites are stored in `/config/.storage/kolourcraft`.

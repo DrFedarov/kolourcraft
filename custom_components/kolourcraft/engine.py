@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+import colorsys
 import logging
 from typing import Any
 
@@ -26,6 +27,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from .adaptive import AdaptiveLighting, member_ids
 from .const import (
     INFLIGHT_TIMEOUT,
+    MAX_SATURATION,
     MIN_LOOP_SECONDS,
     OFF_TO_ON_SETTLE,
     RESTORE_RETRIES,
@@ -55,6 +57,18 @@ def effective_steps(scene: dict[str, Any], steps: list[dict[str, Any]]) -> list[
         if o.get("enabled")
     }
     return [{**step, **overrides} for step in steps] if overrides else steps
+
+
+def capped_hs(rgb: list[int]) -> list[float]:
+    """Convert a step's RGB color to hue/saturation with saturation capped at MAX_SATURATION.
+
+    Fully saturated colors drive one or more of a bulb's LED channels to (near) zero, and
+    many bulbs can only step a channel coarsely there, which shows as visible snaps during
+    fades. Keeping saturation at or below the cap keeps every channel above that range.
+    Brightness is sent separately, so the RGB value component is not needed.
+    """
+    hue, sat, _ = colorsys.rgb_to_hsv(*(c / 255 for c in rgb))
+    return [round(hue * 360, 1), round(min(sat, MAX_SATURATION) * 100, 1)]
 
 
 def _bulbs(hass: HomeAssistant, scene: dict[str, Any]) -> set[str]:
@@ -152,7 +166,7 @@ class SceneRunner:
     def _step_data(self, entity_id: str, step: dict[str, Any]) -> dict[str, Any]:
         return {
             ATTR_ENTITY_ID: entity_id,
-            "rgb_color": list(step["color"]),
+            "hs_color": capped_hs(step["color"]),
             "brightness_pct": int(step["brightness"]),
         }
 

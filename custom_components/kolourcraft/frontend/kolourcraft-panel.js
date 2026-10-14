@@ -849,6 +849,7 @@ class KolourCraftPanel extends HTMLElement {
               (c) => `<button class="pal" data-act="picker-swatch" data-color="[${c}]" style="background:${rgbCss(c)}" title="${rgbToHex(c)}"></button>`
             ).join("")}
           </div>
+          <div class="muted small">Lights are sent at most 85% saturation, which keeps color fades smooth.</div>
           <div class="dialog-actions">
             <button class="text-btn" data-act="close-dialog">Cancel</button>
             <button class="primary" data-act="picker-apply">Apply</button>
